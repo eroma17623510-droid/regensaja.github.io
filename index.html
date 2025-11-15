@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <title>Report a Roblox Player</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial; background:#f6f7fb; color:#111; padding:24px; }
+    .card { max-width:720px; margin:28px auto; background:#fff; border-radius:10px; box-shadow:0 6px 18px rgba(15,20,30,0.08); padding:20px; }
+    h1 { margin:0 0 12px; font-size:20px; }
+    label { display:block; margin-top:12px; font-weight:600; }
+    input[type="text"], textarea, input[type="file"] { width:100%; padding:10px 12px; margin-top:6px; border:1px solid #d9dce6; border-radius:8px; font-size:14px; box-sizing:border-box; }
+    textarea { min-height:120px; resize:vertical; }
+    .row { display:flex; gap:8px; align-items:center; margin-top:14px; }
+    button { background:#5865F2; color:#fff; border:none; padding:10px 14px; border-radius:8px; font-weight:700; cursor:pointer; }
+    button[disabled] { opacity:.6; cursor:not-allowed; }
+    .status { margin-top:12px; font-size:14px; }
+    .error { color:#b00020; }
+    .success { color:#0a8a4f; }
+    .hint { font-size:13px; color:#555; margin-top:6px; }
+  </style>
+</head>
+<body>
+  <div class="card" role="region" aria-label="Report form">
+    <h1>Report a Roblox Player</h1>
+    <p class="hint">Username: только латиница A–Z, цифры 0–9, символы _ и -; длина до 20 символов.</p>
+
+    <form id="reportForm" novalidate>
+      <label for="username">Username</label>
+      <input id="username" name="username" type="text" maxlength="20" required placeholder="Roblox username" autocomplete="off" />
+
+      <label for="reason">Reason</label>
+      <textarea id="reason" name="reason" required placeholder="Опиши причину подробнее (минимум 20 символов)"></textarea>
+
+      <label for="screenshot">Screenshot proof (jpg/png)</label>
+      <input id="screenshot" name="screenshot" type="file" accept="image/png,image/jpeg,image/webp">
+
+      <label style="margin-top:12px;">
+        <input id="confirmCheckbox" type="checkbox" />
+        Я подтверждаю, что жалоба правдива и содержит реальные сведения
+      </label>
+
+      <div class="row">
+        <button id="sendBtn" type="submit">Send Report</button>
+        <div id="spinner" style="display:none">Sending…</div>
+      </div>
+
+      <div id="status" class="status" aria-live="polite"></div>
+    </form>
+  </div>
+
+  <script>
+    const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1436840306632032458/cU_Zc2bH-BG-HGOkGn2VtY-LtvgTr-cdDYUoF38JkvBXJGUC1qd412-HgBa7g39OTT1c";
+    const form = document.getElementById('reportForm');
+    const sendBtn = document.getElementById('sendBtn');
+    const statusEl = document.getElementById('status');
+    const spinner = document.getElementById('spinner');
+    const usernameInput = document.getElementById('username');
+    const reasonInput = document.getElementById('reason');
+    const checkbox = document.getElementById('confirmCheckbox');
+
+    // Разрешённые символы: латиница A-Z a-z, цифры 0-9, _ и -
+    const USERNAME_RE = /^[A-Za-z0-9_-]{1,20}$/;
+
+    function showStatus(message, isError) {
+      statusEl.textContent = message;
+      statusEl.className = isError ? 'status error' : 'status success';
+    }
+
+    // Доп. подсказка при вводе
+    usernameInput.addEventListener('input', () => {
+      const v = usernameInput.value;
+      if (v.length > 20) {
+        showStatus('Максимум 20 символов в нике.', true);
+        return;
+      }
+      if (v && !USERNAME_RE.test(v)) {
+        showStatus('Ник может содержать только латинские буквы, цифры, _ и -.', true);
+        return;
+      }
+      showStatus('', false);
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = usernameInput.value.trim();
+      const reason = reasonInput.value.trim();
+      const fileInput = document.getElementById('screenshot');
+      const file = fileInput.files[0];
+
+      // Клиентская проверки
+      if (!USERNAME_RE.test(username)) {
+        showStatus('Неверный ник. Используй латиницу, цифры, _ или -; до 20 символов.', true);
+        return;
+      }
+      if (reason.length < 20) {
+        showStatus('Опиши причину подробнее (минимум 20 символов).', true);
+        return;
+      }
+      if (!checkbox.checked) {
+        showStatus('Подтверди, что жалоба правдива.', true);
+        return;
+      }
+
+      // Простейшая проверка "не-рофл": запрет на шаблонные короткие ответы типа "lol", "test"
+      const forbiddenShorts = ['lol','test','asdf','rofl','kek','1337'];
+      const reasonLower = reason.toLowerCase();
+      for (const bad of forbiddenShorts) {
+        if (reasonLower === bad) {
+          showStatus('Причина слишком короткая или бессмысленная.', true);
+          return;
+        }
+      }
+
+      sendBtn.disabled = true;
+      spinner.style.display = 'inline';
+      showStatus('', false);
+
+      const now = new Date().toISOString();
+      const content = `**Roblox report**\n**Username:** ${username}\n**Reason:** ${reason}\n**Submitted at:** ${now}`;
+
+      try {
+        const formData = new FormData();
+        formData.append("content", content);
+        if (file) {
+          formData.append("file", file, file.name);
+        }
+
+        const res = await fetch(DISCORD_WEBHOOK, {
+          method: 'POST',
+          body: formData
+        });
+
+        if (res.ok) {
+          showStatus('Report sent successfully.', false);
+          form.reset();
+        } else {
+          const text = await res.text().catch(()=>res.statusText || 'Unknown error');
+          showStatus('Failed to send report: ' + (text || res.status), true);
+        }
+      } catch (err) {
+        showStatus('Network error: ' + (err && err.message ? err.message : 'failed to send'), true);
+      } finally {
+        sendBtn.disabled = false;
+        spinner.style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>

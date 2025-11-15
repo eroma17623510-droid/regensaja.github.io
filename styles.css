@@ -1,0 +1,106 @@
+/* styles.css - минимальный, аккуратный стиль для страницы Report a Roblox Player */
+
+:root{
+  --bg: #f6f7fb;
+  --card: #ffffff;
+  --muted: #6b7280;
+  --accent: #5865F2;
+  --accent-hover: #4854d8;
+  --danger: #b00020;
+  --success: #0a8a4f;
+  --outline: #e6e9ef;
+  --radius: 10px;
+  --pad: 20px;
+  --maxw: 720px;
+  --shadow: 0 6px 18px rgba(15,20,30,0.08);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  color-scheme: light;
+  color: #111827;
+}
+
+/* Page */
+html,body{height:100%;margin:0;padding:0;background:var(--bg);-webkit-font-smoothing:antiali:24px;display:flex;align-items:flex-start;justify-content:center}
+
+/* Card wrapper */
+.card{
+  width:100%;
+  max-width:var(--maxw);
+  background:var(--card);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:var(--pad);
+  box-sizing:border-box;
+}
+
+/* Header and hint */
+h1{margin:0 0 8px;font-size:20px;font-weight:700}
+.hint{margin:0 0 12px;color:var(--muted);font-size:13px}
+
+/* Labels and controls */
+label{display:block;margin-top:12px;font-weight:600;font-size:14px;color:inherit}
+input[type="text"], textarea, input[type="file"], select {
+  width:100%;
+  padding:10px 12px;
+  margin-top:6px;
+  border:1px solid var(--outline);
+  border-radius:8px;
+  font-size:14px;
+  box-sizing:border-box;
+  background:transparent;
+  color:inherit;
+}
+textarea{min-height:120px;resize:vertical}
+input[type="file"]{padding:8px 10px}
+
+/* Row for buttons and spinner */
+.row{display:flex;gap:8px;align-items:center;margin-top:14px;flex-wrap:wrap}
+button{
+  background:var(--accent);
+  color:#fff;
+  border:none;
+  padding:10px 14px;
+  border-radius:8px;
+  font-weight:700;
+  cursor:pointer;
+  transition:background .12s ease,transform .06s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+button:hover{background:var(--accent-hover)}
+button:active{transform:translateY(1px)}
+button[disabled]{opacity:.6;cursor:not-allowed}
+
+/* Status messages */
+.status{margin-top:12px;font-size:14px}
+.status.error{color:var(--danger)}
+.status.success{color:var(--success)}
+
+/* Small helper text and checkbox label */
+.small{font-size:13px;color:var(--muted);margin-top:6px}
+.checkbox-label{display:flex;gap:8px;align-items:center;margin-top:12px;font-size:14px;color:inherit}
+
+/* Image preview block */
+.preview{
+  margin-top:12px;
+  display:flex;
+  gap:12px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.preview img{
+  width:160px;
+  height:120px;
+  border-radius:8px;
+  object-fit:cover;
+  border:1px solid #eef2f7;
+  box-shadow:0 2px 8px rgba(15,20,30,0.04);
+}
+
+/* Accessibility helpers */
+[aria-live]{outline:0}
+
+/* Responsive tweaks */
+@media (max-width:480px){
+  .card{padding:16px}
+  h1{font-size:18px}
+  .preview img{width:120px;height:90px}
+}
